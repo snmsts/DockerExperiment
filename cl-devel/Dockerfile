@@ -1,22 +1,29 @@
 FROM ubuntu:trusty
 MAINTAINER SANO Masatoshi
+ARG user=dev
 
-ENV PATH /root/.roswell/bin:/usr/local/bin:$PATH
+ENV PATH /home/${user}/.roswell/bin:/usr/local/bin:$PATH
 
 RUN apt-get update && \
     apt-get -y install libcurl4-gnutls-dev git build-essential automake autoconf \
-    openssh-server emacs24-nox && \
+    openssh-server emacs24-nox docker.io && \
     apt-get autoremove && apt-get clean
 
-#sshd
-RUN mkdir /var/run/sshd && \
-    echo 'root:root' | chpasswd && \
-    sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
-ENV NOTVISIBLE "in users profile"
-RUN echo "export VISIBLE=now" >> /etc/profile
+RUN groupadd -g 1000 ${user} && \
+    useradd -g ${user} -G sudo -m -s /bin/bash ${user} && \
+    echo ${user}:password | chpasswd
 
-COPY .ssh/ /root/.ssh/
+#sshd
+ARG SSH_HOME=/home/${user}/.ssh
+RUN mkdir /var/run/sshd
+RUN mkdir ${SSH_HOME} && \
+    chown ${user}:${user} ${SSH_HOME} && \
+    chmod 700 ${SSH_HOME}
+
+COPY .ssh/ ${SSH_HOME}/
+RUN cp ${SSH_HOME}/id_rsa.pub ${SSH_HOME}/authorized_keys || true && \
+    chown ${user}:${user} ${SSH_HOME}/* && \
+    chmod 600 ${SSH_HOME}/*
 
 ## install roswell
 WORKDIR /usr/local/src
@@ -28,9 +35,16 @@ RUN sh ./bootstrap && \
        make install && \
        rm -rf /usr/local/src/roswell
 
+USER ${user}
 RUN ros setup && \
-    ros emacs --batch && \
-    rm -rf /root/.roswell/src/ /root/.roswell/tmp/
+    ros swank install 2.18 && \
+    rm -rf /home/${user}/.roswell/src/ /home/${user}/.roswell/tmp/
+
+USER root
+#emacs
+ARG EMACS_D=/home/${user}/.emacs.d
+COPY .emacs.d/ ${EMACS_D}/
+RUN chown -R ${user}:${user} ${EMACS_D} |true
 
 EXPOSE 22 5000 4005
 CMD ["/usr/sbin/sshd", "-D"]

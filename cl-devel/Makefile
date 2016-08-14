@@ -1,22 +1,43 @@
+tagname=some-common-lisp
+name=cl-devel
+help:
+	@echo "[WATCH OUT] this script will copy ~/.emacs.d and ~/.ssh/ to container ."
+	@echo ""
+	@echo "my .emac.d/init.el contains"
+	@echo ""
+	@echo '  (setq inferior-lisp-program "ros -Q run")'
+	@echo '  (load "~/.roswell/helper.el")'
+	@echo "  (slime-setup '(slime-fancy slime-indentation))"
+	@echo ""
+	@echo "if prepared type"
+	@echo ""
+	@echo "  make all"
 all:
 	rm -rf .ssh
 	cp -r ~/.ssh .
-	docker build -f Dockerfile -t some-common-lisp .
+	rm -rf .emacs.d
+	cp -r ~/.emacs.d .
+	docker build -f Dockerfile -t $(tagname) .
 	rm -rf .ssh
+	rm -rf .emacs.d
 no-cache:
 	rm -rf .ssh
 	cp -r ~/.ssh .
-	docker build --no-cache -f Dockerfile -t some-common-lisp .
+	rm -rf .emacs.d
+	cp -r ~/.emacs.d .
+	docker build --no-cache -f Dockerfile -t $(tagname) .
 	rm -rf .ssh
+	rm -rf .emacs.d
 run:
-	docker run -d -P --name cl-devel some-common-lisp
+	mkdir work||true
+	docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD)/work:/home/dev/work -d -P --name $(name) $(tagname)
 ssh:
-	ssh -o StrictHostKeyChecking=no root@0.0.0.0 -p `docker port cl-devel|awk 'NR==1'|awk -F: '{print $$2}'`
+	ssh -l dev -i ~/.ssh/id_rsa -o "UserKnownHostsFile /dev/null" -o StrictHostKeyChecking=no 0.0.0.0 -p `docker port $(name)|awk 'NR==1'|awk -F: '{print $$2}'` 
 kill:
-	docker kill `docker ps -q -f name=cl-devel`||true
-	docker rm cl-devel||true
+	docker kill `docker ps -q -f name=$(name)`||true
+	docker rm $(name)||true
 restart:
 	make kill||true
 	make run
 
-.PHONY: all no-cache run ssh kill restart
+.PHONY: help all no-cache run ssh kill restart
