@@ -32,6 +32,7 @@ RUN sh ./bootstrap && \
 USER ${user}
 RUN ros setup && \
     ros swank install 2.18 && \
+    ros install qlot && \
     rm -rf /home/${user}/.roswell/src/ /home/${user}/.roswell/tmp/ && \
     echo "export PATH=${HOME}/.roswell/bin:${PATH}" >> ${HOME}/.bashrc && \
     echo "export LANG=en_US.UTF-8" >> ${HOME}/.bashrc
@@ -51,6 +52,9 @@ RUN chown ${user}:${user} ${SSH_HOME} && \
     cp ${SSH_HOME}/id_rsa.pub ${SSH_HOME}/authorized_keys || true && \
     chown ${user}:${user} ${SSH_HOME}/* && \
     chmod 600 ${SSH_HOME}/*
+
+#gitconfig
+COPY .gitconfig /home/${user}/.gitconfig
 
 EXPOSE 22 5000 4005
 CMD ["/usr/sbin/sshd", "-D"]
