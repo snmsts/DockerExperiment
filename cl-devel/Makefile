@@ -39,8 +39,11 @@ ssh:
 kill:
 	docker kill `docker ps -q -f name=$(name)`||true
 	docker rm $(name)||true
+info:
+	docker port $(name)
+
 restart:
 	make kill||true
 	make run
 
-.PHONY: help all no-cache run ssh kill restart clean-tmp copy-tmp
+.PHONY: help all no-cache run ssh kill restart clean-tmp copy-tmp info
