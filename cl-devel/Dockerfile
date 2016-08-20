@@ -33,7 +33,7 @@ USER ${user}
 RUN ros setup && \
     ros swank install 2.18 && \
     ros install qlot && \
-    rm -rf /home/${user}/.roswell/src/ /home/${user}/.roswell/tmp/ && \
+    ros install sbcl/`ros config show sbcl-bin.version` --without-install && \
     echo "export PATH=${HOME}/.roswell/bin:${PATH}" >> ${HOME}/.bashrc && \
     echo "export LANG=en_US.UTF-8" >> ${HOME}/.bashrc
 
