@@ -32,8 +32,8 @@ no-cache: clean-tmp copy-tmp
 	make clean-tmp
 
 run:
-	mkdir work||true
-	docker run -v /var/run/docker.sock:/var/run/docker.sock $(run_options) -v $(PWD)/work:/home/dev/work -d -P --name $(name) $(tagname)
+	mkdir ../work||true
+	docker run -v /var/run/docker.sock:/var/run/docker.sock $(run_options) -v $(PWD)/../work:/home/dev/work -d -P --name $(name) $(tagname)
 ssh:
 	ssh -l dev -i ~/.ssh/id_rsa -o "UserKnownHostsFile /dev/null" -o StrictHostKeyChecking=no 0.0.0.0 -p `docker port $(name)|awk 'NR==1'|awk -F: '{print $$2}'` 
 kill:
