@@ -21,17 +21,21 @@ RUN mkdir /var/run/sshd && \
 
 ## install roswell
 WORKDIR /usr/local/src
-RUN git clone -b release https://github.com/roswell/roswell
-WORKDIR /usr/local/src/roswell
-RUN sh ./bootstrap && \
-       ./configure && \
-       make && \
-       make install && \
-       rm -rf /usr/local/src/roswell
+RUN git clone -b release https://github.com/roswell/roswell && \
+    cd roswell && \
+    sh ./bootstrap && \
+    ./configure && \
+    make && \
+    make install && \
+    rm -rf /usr/local/src/roswell
+
+ARG sbcl_version=
+ARG swank_version=2.18
 
 USER ${user}
-RUN ros setup && \
-    ros swank install 2.18 && \
+RUN ros install sbcl-bin/${sbcl_version} && \
+    ros setup && \
+    ros swank install ${swank_version} && \
     ros install qlot && \
     ros install sbcl/`ros config show sbcl-bin.version` --without-install && \
     echo "export PATH=${HOME}/.roswell/bin:${PATH}" >> ${HOME}/.bashrc && \
